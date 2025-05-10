@@ -1,0 +1,6 @@
+@echo off
+echo Installing dependencies...
+npm install
+
+echo Starting WhatsApp bot server...
+npm start

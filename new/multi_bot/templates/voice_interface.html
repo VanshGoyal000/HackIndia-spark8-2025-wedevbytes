@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Assistant Voice Interface</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-top: 20px;
+            background-color: #f8f9fa;
+        }
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .step-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .active-step {
+            border-color: #0d6efd;
+            background-color: #f0f7ff;
+        }
+        .completed-step {
+            border-color: #198754;
+            background-color: #f0fff4;
+        }
+        .disabled-step {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        .recording-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: red;
+            display: inline-block;
+            margin-right: 10px;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+        .conversation-container {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .user-message {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .bot-message {
+            background-color: #d1e7ff;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .source-citation {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container main-container">
+        <h1 class="text-center mb-4">Legal Assistant Voice Interface</h1>
+        <p class="text-center mb-4">Ask legal questions using your voice without making a phone call</p>
+        
+        <!-- Step 1: Language Selection -->
+        <div id="step1" class="step-container active-step">
+            <h3>Step 1: Select Language</h3>
+            <div class="mb-3">
+                <label for="language" class="form-label">Choose your preferred language:</label>
+                <select id="language" class="form-select">
+                    <option value="" selected disabled>Select a language</option>
+                    <option value="1">English</option>
+                    <option value="2">Hindi</option>
+                    <option value="3">Tamil</option>
+                    <option value="4">Telugu</option>
+                    <option value="5">Marathi</option>
+                </select>
+            </div>
+            <button id="setLanguage" class="btn btn-primary">Continue</button>
+        </div>
+        
+        <!-- Step 2: Bot Selection -->
+        <div id="step2" class="step-container disabled-step">
+            <h3>Step 2: Select Legal Domain</h3>
+            <div class="mb-3">
+                <label for="bot" class="form-label">Choose a legal domain:</label>
+                <select id="bot" class="form-select">
+                    <option value="" selected disabled>Select a domain</option>
+                    <option value="1">IPC Bot (Indian Penal Code)</option>
+                    <option value="2">RTI Bot (Right to Information)</option>
+                    <option value="3">Labor Law Bot</option>
+                    <option value="4">Constitution Bot</option>
+                </select>
+            </div>
+            <button id="setBot" class="btn btn-primary">Continue</button>
+        </div>
+        
+        <!-- Step 3: Voice Input -->
+        <div id="step3" class="step-container disabled-step">
+            <h3>Step 3: Ask Your Question</h3>
+            <p>Press and hold the Record button while speaking your question.</p>
+            <button id="recordButton" class="btn btn-danger mb-3">
+                <span id="recordIcon">🎤</span> <span id="recordText">Hold to Record</span>
+            </button>
+            <div id="recordingStatus" class="mb-3" style="display: none;">
+                <span class="recording-indicator"></span> Recording...
+            </div>
+        </div>
+        
+        <!-- Conversation Display -->
+        <div id="conversationContainer" class="conversation-container mt-4" style="display: none;">
+            <h3>Conversation</h3>
+            <div id="conversation"></div>
+        </div>
+        
+        <!-- Reset Button -->
+        <div class="text-center mt-3">
+            <button id="resetButton" class="btn btn-outline-secondary" style="display: none;">Start New Conversation</button>
+        </div>
+    </div>
+    
+    <script>
+        // Session management
+        let sessionId = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+        
+        // Initialize session when page loads
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('/web_session', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                sessionId = data.session_id;
+                console.log('Session created:', sessionId);
+            } catch (error) {
+                console.error('Error creating session:', error);
+                alert('Failed to initialize session. Please refresh the page.');
+            }
+        });
+        
+        // Set language
+        document.getElementById('setLanguage').addEventListener('click', async function() {
+            const languageSelect = document.getElementById('language');
+            const languageCode = languageSelect.value;
+            
+            if (!languageCode) {
+                alert('Please select a language');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/web_set_language', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        language_code: languageCode
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Move to next step
+                    document.getElementById('step1').classList.remove('active-step');
+                    document.getElementById('step1').classList.add('completed-step');
+                    document.getElementById('step2').classList.remove('disabled-step');
+                    document.getElementById('step2').classList.add('active-step');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error setting language:', error);
+                alert('Failed to set language. Please try again.');
+            }
+        });
+        
+        // Set bot
+        document.getElementById('setBot').addEventListener('click', async function() {
+            const botSelect = document.getElementById('bot');
+            const botCode = botSelect.value;
+            
+            if (!botCode) {
+                alert('Please select a legal domain');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/web_set_bot', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        bot_code: botCode
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Move to next step
+                    document.getElementById('step2').classList.remove('active-step');
+                    document.getElementById('step2').classList.add('completed-step');
+                    document.getElementById('step3').classList.remove('disabled-step');
+                    document.getElementById('step3').classList.add('active-step');
+                    
+                    // Initialize audio recording
+                    initializeAudioRecording();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error setting bot:', error);
+                alert('Failed to set legal domain. Please try again.');
+            }
+        });
+        
+        // Handle audio recording
+        function initializeAudioRecording() {
+            const recordButton = document.getElementById('recordButton');
+            const recordingStatus = document.getElementById('recordingStatus');
+            const recordIcon = document.getElementById('recordIcon');
+            const recordText = document.getElementById('recordText');
+            
+            // Request microphone access
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    // Create media recorder
+                    mediaRecorder = new MediaRecorder(stream);
+                    
+                    // Collect audio chunks when data is available
+                    mediaRecorder.addEventListener('dataavailable', event => {
+                        audioChunks.push(event.data);
+                    });
+                    
+                    // Process recorded audio when recording stops
+                    mediaRecorder.addEventListener('stop', () => {
+                        processRecording();
+                    });
+                    
+                    // Start recording when button is pressed
+                    recordButton.addEventListener('mousedown', startRecording);
+                    recordButton.addEventListener('touchstart', startRecording);
+                    
+                    // Stop recording when button is released
+                    recordButton.addEventListener('mouseup', stopRecording);
+                    recordButton.addEventListener('mouseleave', stopRecording);
+                    recordButton.addEventListener('touchend', stopRecording);
+                    
+                    function startRecording() {
+                        if (!isRecording) {
+                            audioChunks = [];
+                            mediaRecorder.start();
+                            isRecording = true;
+                            recordingStatus.style.display = 'block';
+                            recordIcon.textContent = '⏺';
+                            recordText.textContent = 'Recording...';
+                            recordButton.classList.remove('btn-danger');
+                            recordButton.classList.add('btn-warning');
+                        }
+                    }
+                    
+                    function stopRecording() {
+                        if (isRecording) {
+                            mediaRecorder.stop();
+                            isRecording = false;
+                            recordingStatus.style.display = 'none';
+                            recordIcon.textContent = '🎤';
+                            recordText.textContent = 'Processing...';
+                            recordButton.disabled = true;
+                            recordButton.classList.remove('btn-warning');
+                            recordButton.classList.add('btn-secondary');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error accessing microphone:', error);
+                    alert('Failed to access microphone. Please ensure you have granted microphone permissions.');
+                });
+        }
+        
+        // Process recorded audio
+        async function processRecording() {
+            try {
+                // Convert audio chunks to blob
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                
+                // Create base64 representation of audio
+                const reader = new FileReader();
+                reader.readAsDataURL(audioBlob);
+                
+                reader.onloadend = async function() {
+                    const base64Audio = reader.result;
+                    
+                    // Send audio to server for processing
+                    const response = await fetch('/web_process_audio', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            session_id: sessionId,
+                            audio: base64Audio
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    // Reset recording button
+                    const recordButton = document.getElementById('recordButton');
+                    const recordText = document.getElementById('recordText');
+                    recordButton.disabled = false;
+                    recordText.textContent = 'Hold to Record';
+                    recordButton.classList.remove('btn-secondary');
+                    recordButton.classList.add('btn-danger');
+                    
+                    // Display conversation
+                    document.getElementById('conversationContainer').style.display = 'block';
+                    document.getElementById('resetButton').style.display = 'inline-block';
+                    
+                    if (data.success) {
+                        // Add user question to conversation
+                        addMessageToConversation('user', data.transcription);
+                        
+                        // Add bot response to conversation
+                        addMessageToConversation('bot', data.answer, data.sources);
+                    } else {
+                        // Display error message
+                        addMessageToConversation('bot', `Error: ${data.error}`);
+                    }
+                };
+            } catch (error) {
+                console.error('Error processing recording:', error);
+                alert('Failed to process recording. Please try again.');
+                
+                // Reset recording button
+                const recordButton = document.getElementById('recordButton');
+                const recordText = document.getElementById('recordText');
+                recordButton.disabled = false;
+                recordText.textContent = 'Hold to Record';
+                recordButton.classList.remove('btn-secondary');
+                recordButton.classList.add('btn-danger');
+            }
+        }
+        
+        // Add message to conversation
+        function addMessageToConversation(type, message, sources = []) {
+            const conversation = document.getElementById('conversation');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'user' ? 'user-message' : 'bot-message';
+            
+            // Create message content
+            messageDiv.innerHTML = `<strong>${type === 'user' ? 'You' : 'Legal Assistant'}:</strong> ${message}`;
+            
+            // Add sources if available
+            if (sources && sources.length > 0) {
+                const sourcesDiv = document.createElement('div');
+                sourcesDiv.className = 'source-citation';
+                sourcesDiv.innerHTML = '<strong>Sources:</strong><br>';
+                
+                sources.forEach((source, index) => {
+                    sourcesDiv.innerHTML += `Source ${index + 1}: ${source.source}, Page ${source.page}<br>`;
+                });
+                
+                messageDiv.appendChild(sourcesDiv);
+            }
+            
+            // Add to conversation
+            conversation.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            const container = document.getElementById('conversationContainer');
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        // Reset conversation
+        document.getElementById('resetButton').addEventListener('click', function() {
+            // Clear conversation
+            document.getElementById('conversation').innerHTML = '';
+            
+            // Reset steps
+            document.getElementById('step1').classList.add('active-step');
+            document.getElementById('step1').classList.remove('completed-step');
+            document.getElementById('step2').classList.add('disabled-step');
+            document.getElementById('step2').classList.remove('active-step', 'completed-step');
+            document.getElementById('step3').classList.add('disabled-step');
+            document.getElementById('step3').classList.remove('active-step', 'completed-step');
+            
+            // Reset selects
+            document.getElementById('language').value = '';
+            document.getElementById('bot').value = '';
+            
+            // Hide conversation
+            document.getElementById('conversationContainer').style.display = 'none';
+            document.getElementById('resetButton').style.display = 'none';
+            
+            // Create new session
+            createNewSession();
+        });
+        
+        async function createNewSession() {
+            try {
+                const response = await fetch('/web_session', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                sessionId = data.session_id;
+                console.log('New session created:', sessionId);
+            } catch (error) {
+                console.error('Error creating session:', error);
+                alert('Failed to create new session. Please refresh the page.');
+            }
+        }
+    </script>
+</body>
+</html>
