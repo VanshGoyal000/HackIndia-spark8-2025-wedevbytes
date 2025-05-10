@@ -1,14 +1,15 @@
-# EstateNet: AI-Powered Legal Assistant
+# AI-Powered Legal Assistant
 
-<p align="center">
-  <img src="docs/images/estatenet-logo.png" alt="EstateNet Logo" width="200"/>
-  <br>
-  <em>Making Legal Knowledge Accessible Across Multiple Channels</em>
-</p>
 
 ## 🏆 Hackathon Submission
 
 This project was created for [Hackathon Name] to demonstrate how AI can make legal information more accessible to the general public through multiple interaction channels.
+
+![alt text](<WhatsApp Image 2025-05-10 at 10.55.40_ddcac360.jpg>)
+
+![alt text](image.png)
+
+DATA - constitution of india , ALL ipc , labour law delhi college book , rti indian court pages
 
 ## 📋 Table of Contents
 
@@ -28,7 +29,8 @@ This project was created for [Hackathon Name] to demonstrate how AI can make leg
 
 ## 🔍 Overview
 
-**EstateNet** is a multi-channel legal assistance platform that provides accurate legal information to users through phone calls, WhatsApp, and potentially other channels. Using Retrieval Augmented Generation (RAG) technology, the system accesses a specialized knowledge base of Indian legal documents to provide reliable legal information.
+
+**Legal Assistant** is a multi-channel legal assistance platform that provides accurate legal information to users through phone calls, WhatsApp, and potentially other channels. Using Retrieval Augmented Generation (RAG) technology, the system accesses a specialized knowledge base of Indian legal documents to provide reliable legal information.
 
 **Problem Statement:** Legal information is often inaccessible to the average citizen due to complex language, limited access to lawyers, and the intimidating nature of legal systems. This particularly impacts those with limited literacy or internet access.
 
@@ -50,11 +52,9 @@ This project was created for [Hackathon Name] to demonstrate how AI can make leg
 
 ## 🏗️ Architecture
 
-<p align="center">
-  <img src="docs/images/architecture.png" alt="EstateNet Architecture" width="700"/>
-</p>
 
-EstateNet follows a modular microservice architecture:
+
+This follows a modular microservice architecture:
 
 1. **Front-End Channels**: 
    - IVR system via Exotel
@@ -66,7 +66,7 @@ EstateNet follows a modular microservice architecture:
    - Session management for context preservation
 
 3. **Data Layer**:
-   - Vector database (Pinecone/FAISS) for document embeddings
+   - Vector database (CHROMADB) for document embeddings
    - Legal document corpus with structured metadata
 
 4. **AI Models**:
@@ -213,9 +213,6 @@ The WhatsApp integration leverages Twilio's API:
 4. Ask your legal question in natural language
 5. Receive an answer with relevant legal information and sources
 
-<p align="center">
-  <img src="docs/images/whatsapp-example.png" alt="WhatsApp Example" width="300"/>
-</p>
 
 ### Phone Call Interaction
 
@@ -224,34 +221,17 @@ The WhatsApp integration leverages Twilio's API:
 3. Speak your legal question after the beep
 4. Listen to the answer and press 1 for another question or 2 to end the call
 
-<p align="center">
-  <img src="docs/images/ivr-example.png" alt="IVR Example" width="500"/>
-</p>
 
 ## 🚀 Future Development
 
-1. **Additional Channels**: Web interface, Telegram, and SMS integration
+1. **Additional Channels**: Web interface, and SMS integration
 2. **Enhanced Multilingual Support**: Expand language options
 3. **Legal Document Upload**: Allow users to upload case documents for analysis
 4. **User Authentication**: Enable secure user accounts for tracking legal issues
 5. **Lawyer Referral System**: Connect users with legal professionals when needed
 
-## 👥 Team
 
-- **Team Lead** - Project Lead & Backend Developer
-- **Legal Expert** - Content and Legal Information Verification
-- **AI Engineer** - RAG System Implementation
-- **Full Stack Developer** - Frontend & Integration Developer
 
-## 📄 License
+## 🛠 Contributors
 
-This project is open source - see the [LICENSE](LICENSE) file for details.
-
-## 🛠️ Project Structure
-
-- **rag/**: Backend services for the RAG system
-- **whatsapp_example/**: WhatsApp bot integration
-- **callerjs/**: IVR system implementation
-- **docs/**: Documentation and images
-- **LICENSE**: License file for the project
-- **README.md**: This readme file
+> Developed with ❤ by Team WeDevBytes from Graphic Era Deemed to Be University.
